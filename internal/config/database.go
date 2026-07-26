@@ -12,7 +12,7 @@ import (
 var GormDB *gorm.DB
 
 // ConnectDB establishes the GORM connection.
-func ConnectDB() {
+func ConnectDB() (*gorm.DB, error) {
 
 	dbUser := DB_USER         // Get the database user from environment variables config.go
 	dbPassword := DB_PASSWORD // Get the database password from environment variables config.go
@@ -44,6 +44,7 @@ func ConnectDB() {
 	}
 
 	log.Println("Successfully connected to MySQL using GORM")
+	return GormDB, nil
 }
 
 // ensureDatabase creates DB_NAME when it does not already exist. It connects

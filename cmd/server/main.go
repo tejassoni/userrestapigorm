@@ -1,26 +1,21 @@
 package main
 
 import (
-	"log"
-	"net/http"
-	"userrestapigorm/internal/config"
-	"userrestapigorm/internal/logger"
-	"userrestapigorm/internal/router"
+	"fmt"
+	"os"
+
+	"userrestapigorm/internal/bootstrap"
 )
 
 func main() {
+	app, err := bootstrap.Build()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "initialization failed: %v\n", err)
+		os.Exit(1)
+	}
 
-	// logs
-	logger.New()
-	// Initialize the validator
-	// validator.New()
-
-	config.ConnectDB()         // Establish a connection to the database
-	httpRouter := router.New() // Register application routes
-
-	log.Println("Server started on " + config.APP_URL + ":" + config.APP_PORT) // Log the server start message
-
-	if err := http.ListenAndServe(":"+config.APP_PORT, httpRouter); err != nil {
-		log.Fatal(err)
+	if err := app.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "runtime error: %v\n", err)
+		os.Exit(1)
 	}
 }

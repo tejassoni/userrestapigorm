@@ -1,13 +1,17 @@
 package router
 
-import "github.com/gorilla/mux"
+import (
+	"userrestapigorm/internal/handlers"
 
-func New() *mux.Router {
+	"github.com/gorilla/mux"
+)
+
+func New(userHandler *handlers.UserHandler) *mux.Router {
 	router := mux.NewRouter()
 
 	registerHealthRoutes(router)
-	registerV1Routes(router)
-	registerV2Routes(router)
+	registerV1Routes(router, userHandler)
+	registerV2Routes(router, userHandler)
 
 	return router
 }

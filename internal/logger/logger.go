@@ -9,7 +9,7 @@ import (
 
 var Logger *slog.Logger
 
-func New() {
+func New() *slog.Logger {
 	// Create logs directory if it doesn't exist
 	if err := os.MkdirAll("storage/logs", 0755); err != nil {
 		log.Fatal(err)
@@ -37,4 +37,5 @@ func New() {
 
 	// Make it the default logger
 	slog.SetDefault(Logger)
+	return Logger
 }
