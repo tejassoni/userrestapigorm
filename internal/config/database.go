@@ -1,22 +1,17 @@
 package config
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"regexp"
 
-	_ "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
-var (
-	DB     *sql.DB
-	GormDB *gorm.DB
-)
+var GormDB *gorm.DB
 
-/* ConnectDB establishes SQL and GORM connections */
+// ConnectDB establishes the GORM connection.
 func ConnectDB() {
 
 	dbUser := DB_USER         // Get the database user from environment variables config.go
@@ -38,38 +33,17 @@ func ConnectDB() {
 		dbName,
 	)
 
-	// ---------------------------
-	// database/sql connection
-	// ---------------------------
 	var err error
-	DB, err = sql.Open("mysql", dsn)
-	if err != nil {
-		log.Fatal("Error opening database connection:", err)
-	}
-
-	configurePool(DB)
-
-	if err = DB.Ping(); err != nil {
-		log.Fatal("Error pinging database:", err)
-	}
-
-	// ---------------------------
-	// GORM connection
-	// ---------------------------
 	GormDB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Error connecting GORM:", err)
 	}
 
-	// Apply the same pool settings
-	sqlDB, err := GormDB.DB()
-	if err != nil {
-		log.Fatal(err)
+	if err := configurePool(GormDB); err != nil {
+		log.Fatal("Error configuring GORM connection pool:", err)
 	}
 
-	configurePool(sqlDB)
-
-	log.Println("Successfully connected to MySQL using database/sql and GORM")
+	log.Println("Successfully connected to MySQL using GORM")
 }
 
 // ensureDatabase creates DB_NAME when it does not already exist. It connects
@@ -87,30 +61,38 @@ func ensureDatabase(user, password, host, port, name string) error {
 		port,
 	)
 
-	adminDB, err := sql.Open("mysql", adminDSN)
+	adminDB, err := gorm.Open(mysql.Open(adminDSN), &gorm.Config{})
 	if err != nil {
 		return fmt.Errorf("open MySQL server connection: %w", err)
 	}
-	defer adminDB.Close()
 
-	if err := adminDB.Ping(); err != nil {
-		return fmt.Errorf("ping MySQL server: %w", err)
+	adminSQLDB, err := adminDB.DB()
+	if err != nil {
+		return fmt.Errorf("access MySQL server connection: %w", err)
 	}
+	defer adminSQLDB.Close()
 
 	query := fmt.Sprintf(
 		"CREATE DATABASE IF NOT EXISTS `%s` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci",
 		name,
 	)
-	if _, err := adminDB.Exec(query); err != nil {
+	if err := adminDB.Exec(query).Error; err != nil {
 		return fmt.Errorf("create database %q: %w", name, err)
 	}
 
 	return nil
 }
 
-func configurePool(db *sql.DB) {
-	db.SetConnMaxLifetime(DB_CONN_MAX_LIFETIME)
-	db.SetConnMaxIdleTime(DB_CONN_MAX_IDLE_TIME)
-	db.SetMaxOpenConns(DB_MAX_OPEN_CONNS)
-	db.SetMaxIdleConns(DB_MAX_IDLE_CONNS)
+func configurePool(gormDB *gorm.DB) error {
+	sqlDB, err := gormDB.DB()
+	if err != nil {
+		return err
+	}
+
+	sqlDB.SetConnMaxLifetime(DB_CONN_MAX_LIFETIME)
+	sqlDB.SetConnMaxIdleTime(DB_CONN_MAX_IDLE_TIME)
+	sqlDB.SetMaxOpenConns(DB_MAX_OPEN_CONNS)
+	sqlDB.SetMaxIdleConns(DB_MAX_IDLE_CONNS)
+
+	return nil
 }
