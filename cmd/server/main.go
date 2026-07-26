@@ -6,7 +6,6 @@ import (
 	"userrestapigorm/internal/config"
 	"userrestapigorm/internal/logger"
 	"userrestapigorm/internal/router"
-	"userrestapigorm/internal/validator"
 )
 
 func main() {
@@ -14,7 +13,7 @@ func main() {
 	// logs
 	logger.New()
 	// Initialize the validator
-	validator.New()
+	// validator.New()
 
 	config.ConnectDB()         // Establish a connection to the database
 	httpRouter := router.New() // Register application routes
