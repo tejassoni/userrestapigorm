@@ -11,12 +11,12 @@ var Logger *slog.Logger
 
 func New() {
 	// Create logs directory if it doesn't exist
-	if err := os.MkdirAll("logs", 0755); err != nil {
+	if err := os.MkdirAll("storage/logs", 0755); err != nil {
 		log.Fatal(err)
 	}
 
 	file, err := os.OpenFile(
-		"logs/app.log",
+		"storage/logs/app.log",
 		os.O_CREATE|os.O_APPEND|os.O_WRONLY,
 		0666,
 	)
