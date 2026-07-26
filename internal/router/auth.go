@@ -1,7 +1,7 @@
 package router
 
 import (
-	"userrestapigo/internal/handlers"
+	"userrestapigorm/internal/handlers"
 
 	"github.com/gorilla/mux"
 )

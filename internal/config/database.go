@@ -4,10 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"os"
 	"time"
-
-	"github.com/joho/godotenv"
 
 	_ "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
@@ -19,22 +16,14 @@ var (
 	GormDB *gorm.DB
 )
 
-/* LoadEnv loads environment variables from a .env file */
-func Load() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
-	}
-}
-
 /* ConnectDB establishes SQL and GORM connections */
 func ConnectDB() {
-	Load()
 
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbName := os.Getenv("DB_NAME")
+	dbUser := DB_USER         // Get the database user from environment variables config.go
+	dbPassword := DB_PASSWORD // Get the database password from environment variables config.go
+	dbHost := DB_HOST         // Get the database host from environment variables config.go
+	dbPort := DB_PORT         // Get the database port from environment variables config.go
+	dbName := DB_NAME         // Get the database name from environment variables config.go
 
 	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",

@@ -2,8 +2,8 @@ package repository
 
 import (
 	"errors"
-	"userrestapigo/internal/config"
-	"userrestapigo/internal/models"
+	"userrestapigorm/internal/config"
+	"userrestapigorm/internal/models"
 )
 
 /*

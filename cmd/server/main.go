@@ -3,10 +3,10 @@ package main
 import (
 	"log"
 	"net/http"
-	"userrestapigo/internal/config"
-	"userrestapigo/internal/logger"
-	"userrestapigo/internal/router"
-	"userrestapigo/internal/validator"
+	"userrestapigorm/internal/config"
+	"userrestapigorm/internal/logger"
+	"userrestapigorm/internal/router"
+	"userrestapigorm/internal/validator"
 )
 
 func main() {
@@ -16,7 +16,6 @@ func main() {
 	// Initialize the validator
 	validator.New()
 
-	config.Load()              // Load environment variables from .env file
 	config.ConnectDB()         // Establish a connection to the database
 	httpRouter := router.New() // Register application routes
 

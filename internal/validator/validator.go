@@ -2,7 +2,7 @@ package validator
 
 import (
 	"time"
-	"userrestapigo/internal/repository"
+	"userrestapigorm/internal/repository"
 
 	"github.com/go-playground/validator/v10"
 )

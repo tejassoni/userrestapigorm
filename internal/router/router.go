@@ -3,7 +3,7 @@ package router
 import (
 	"encoding/json"
 	"net/http"
-	"userrestapigo/internal/config"
+	"userrestapigorm/internal/config"
 
 	"github.com/gorilla/mux"
 )

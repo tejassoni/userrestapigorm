@@ -3,12 +3,12 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"userrestapigo/internal/errors"
-	"userrestapigo/internal/logger"
-	"userrestapigo/internal/models"
-	"userrestapigo/internal/repository"
-	"userrestapigo/internal/requests"
-	"userrestapigo/internal/responses"
+	"userrestapigorm/internal/errors"
+	"userrestapigorm/internal/logger"
+	"userrestapigorm/internal/models"
+	"userrestapigorm/internal/repository"
+	"userrestapigorm/internal/requests"
+	"userrestapigorm/internal/responses"
 )
 
 func Register(w http.ResponseWriter, r *http.Request) {

@@ -11,3 +11,5 @@ go get github.com/joho/godotenv
 go get github.com/gorilla/mux
 # validations 
 go get github.com/go-playground/validator/v10
+# logs
+log/slog
