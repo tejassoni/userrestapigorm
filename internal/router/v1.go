@@ -7,8 +7,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func registerV1Routes(route *mux.Router, userHandler *handlers.UserHandler) {
-	v1 := route.PathPrefix(config.API_PREFIX + "/" + config.API_VERSION).Subrouter()
+func registerV1Routes(route *mux.Router, userHandler *handlers.UserHandler, cfg *config.Config) {
+	v1 := route.PathPrefix(cfg.API.Prefix + "/" + cfg.API.Version).Subrouter()
 
 	registerUserV1Routes(v1, userHandler)
 	registerAuthV1Routes(v1)

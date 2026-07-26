@@ -2,8 +2,8 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"regexp"
+	"strconv"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -13,15 +13,17 @@ var GormDB *gorm.DB
 
 // ConnectDB establishes the GORM connection.
 func ConnectDB() (*gorm.DB, error) {
+	cfg := Load()
+	databaseConfig := cfg.Database
 
-	dbUser := DB_USER         // Get the database user from environment variables config.go
-	dbPassword := DB_PASSWORD // Get the database password from environment variables config.go
-	dbHost := DB_HOST         // Get the database host from environment variables config.go
-	dbPort := DB_PORT         // Get the database port from environment variables config.go
-	dbName := DB_NAME         // Get the database name from environment variables config.go
+	dbUser := databaseConfig.Username
+	dbPassword := databaseConfig.Password
+	dbHost := databaseConfig.Host
+	dbPort := strconv.Itoa(databaseConfig.Port)
+	dbName := databaseConfig.Database
 
 	if err := ensureDatabase(dbUser, dbPassword, dbHost, dbPort, dbName); err != nil {
-		log.Fatal("Error creating database:", err)
+		return nil, fmt.Errorf("create database: %w", err)
 	}
 
 	dsn := fmt.Sprintf(
@@ -36,14 +38,13 @@ func ConnectDB() (*gorm.DB, error) {
 	var err error
 	GormDB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal("Error connecting GORM:", err)
+		return nil, fmt.Errorf("open GORM connection: %w", err)
 	}
 
-	if err := configurePool(GormDB); err != nil {
-		log.Fatal("Error configuring GORM connection pool:", err)
+	if err := configurePool(GormDB, databaseConfig); err != nil {
+		return nil, fmt.Errorf("configure connection pool: %w", err)
 	}
 
-	log.Println("Successfully connected to MySQL using GORM")
 	return GormDB, nil
 }
 
@@ -84,16 +85,15 @@ func ensureDatabase(user, password, host, port, name string) error {
 	return nil
 }
 
-func configurePool(gormDB *gorm.DB) error {
+func configurePool(gormDB *gorm.DB, config DatabaseConfig) error {
 	sqlDB, err := gormDB.DB()
 	if err != nil {
 		return err
 	}
 
-	sqlDB.SetConnMaxLifetime(DB_CONN_MAX_LIFETIME)
-	sqlDB.SetConnMaxIdleTime(DB_CONN_MAX_IDLE_TIME)
-	sqlDB.SetMaxOpenConns(DB_MAX_OPEN_CONNS)
-	sqlDB.SetMaxIdleConns(DB_MAX_IDLE_CONNS)
+	sqlDB.SetConnMaxLifetime(config.ConnMaxLifetime)
+	sqlDB.SetMaxOpenConns(config.MaxConnections)
+	sqlDB.SetMaxIdleConns(config.MaxIdleConns)
 
 	return nil
 }

@@ -8,9 +8,12 @@ import (
 )
 
 func main() {
-	config.ConnectDB()
+	db, err := config.ConnectDB()
+	if err != nil {
+		log.Fatal("database connection failed: ", err)
+	}
 
-	if err := config.GormDB.AutoMigrate(&models.User{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}); err != nil {
 		log.Fatal("migration failed: ", err)
 	}
 

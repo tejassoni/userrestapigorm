@@ -1,7 +1,6 @@
 package config
 
 import (
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -9,216 +8,135 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Application
-var (
-	APP_NAME     string
-	APP_ENV      string
-	APP_PORT     string
-	APP_DEBUG    bool
-	APP_VERSION  string
-	APP_TIMEZONE string
-	APP_URL      string
-)
+// Config holds all application configuration
+type Config struct {
+	App      AppConfig
+	Server   ServerConfig
+	API      APIConfig
+	Database DatabaseConfig
+	Logger   LoggerConfig
+	JWT      JWTConfig
+}
 
-// API
-var (
-	API_PREFIX  string
-	API_VERSION string
-)
+// AppConfig contains application metadata
+type AppConfig struct {
+	Name    string
+	Version string
+	Env     string // development, staging, production
+}
 
-// Database
-var (
-	DB_CONNECTION         string
-	DB_HOST               string
-	DB_PORT               string
-	DB_NAME               string
-	DB_USER               string
-	DB_PASSWORD           string
-	DB_MAX_OPEN_CONNS     int
-	DB_MAX_IDLE_CONNS     int
-	DB_CONN_MAX_LIFETIME  time.Duration
-	DB_CONN_MAX_IDLE_TIME time.Duration
-)
+// ServerConfig contains HTTP server settings
+type ServerConfig struct {
+	Host         string
+	Port         string
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+	IdleTimeout  time.Duration
+	ReadHeaderTimeout time.Duration
+}
 
-// SMTP
-var (
-	SMTP_HOST     string
-	SMTP_PORT     int
-	SMTP_USERNAME string
-	SMTP_PASSWORD string
-	SMTP_FROM     string
-)
+// APIConfig contains the public API route prefix and version.
+type APIConfig struct {
+	Prefix  string
+	Version string
+}
 
-// Redis
-var (
-	REDIS_HOST     string
-	REDIS_PORT     int
-	REDIS_PASSWORD string
-	REDIS_DB       int
-)
+// DatabaseConfig contains database connection settings
+type DatabaseConfig struct {
+	Driver          string // mysql, postgres
+	Host            string
+	Port            int
+	Username        string
+	Password        string
+	Database        string
+	MaxConnections  int
+	MaxIdleConns    int
+	ConnMaxLifetime time.Duration
+}
 
-// Logging
-var (
-	LOG_LEVEL string
-)
+// LoggerConfig contains logging settings
+type LoggerConfig struct {
+	Level  string // debug, info, warn, error
+	Format string // json, text
+}
 
-// File Uploads
-var (
-	UPLOAD_DIR      string
-	MAX_UPLOAD_SIZE string
-)
+// JWTConfig contains JWT settings
+type JWTConfig struct {
+	Secret string
+	Expiry int // minutes
+}
 
-// Pagination
-var (
-	DEFAULT_PAGE_SIZE int
-	MAX_PAGE_SIZE     int
-)
+// Load loads configuration from environment variables
+func Load() *Config {
+	_ = godotenv.Load()
 
-// Rate Limiting
-var (
-	RATE_LIMIT_REQUESTS int
-	RATE_LIMIT_DURATION time.Duration
-)
-
-// JWT Authentication
-var (
-	JWT_SECRET     string
-	JWT_EXPIRATION time.Duration
-	JWT_ISSUER     string
-)
-
-// CORS
-var (
-	CORS_ALLOWED_ORIGINS string
-	CORS_ALLOWED_METHODS string
-	CORS_ALLOWED_HEADERS string
-)
-
-func init() {
-	// Load .env file
-	err := godotenv.Load()
-	if err != nil && os.Getenv("APP_ENV") != "production" {
-		log.Println("Warning: .env file not found")
+	return &Config{
+		App: AppConfig{
+			Name:    getenv("APP_NAME", "api"),
+			Version: getenv("APP_VERSION", "1.0.0"),
+			Env:     getenv("APP_ENV", "development"),
+		},
+		Server: ServerConfig{
+			Host:              getenv("SERVER_HOST", ""),
+			Port:              getenv("APP_PORT", "8080"),
+			ReadHeaderTimeout: getenvDuration("SERVER_READ_HEADER_TIMEOUT", 5*time.Second),
+			ReadTimeout:       getenvDuration("SERVER_READ_TIMEOUT", 10*time.Second),
+			WriteTimeout:      getenvDuration("SERVER_WRITE_TIMEOUT", 10*time.Second),
+			IdleTimeout:       getenvDuration("SERVER_IDLE_TIMEOUT", 60*time.Second),
+		},
+		API: APIConfig{
+			Prefix:  getenv("API_PREFIX", "/api"),
+			Version: getenv("API_VERSION", "v1"),
+		},
+		Database: DatabaseConfig{
+			Driver:          getenv("DB_CONNECTION", "mysql"),
+			Host:            getenv("DB_HOST", "localhost"),
+			Port:            getenvi("DB_PORT", 3306),
+			Username:        getenv("DB_USER", "root"),
+			Password:        getenv("DB_PASSWORD", ""),
+			Database:        getenv("DB_NAME", "api_db"),
+			MaxConnections:  getenvi("DB_MAX_OPEN_CONNS", 10),
+			MaxIdleConns:    getenvi("DB_MAX_IDLE_CONNS", 5),
+			ConnMaxLifetime: getenvDuration("DB_CONN_MAX_LIFETIME", 60*time.Minute),
+		},
+		Logger: LoggerConfig{
+			Level:  getenv("LOG_LEVEL", "info"),
+			Format: getenv("LOG_FORMAT", "json"),
+		},
+		JWT: JWTConfig{
+			Secret: getenv("JWT_SECRET", "your-secret-key-change-this"),
+			Expiry: getenvi("JWT_EXPIRY", 15),
+		},
 	}
-
-	// Application
-	APP_NAME = getEnv("APP_NAME", "User REST API")
-	APP_ENV = getEnv("APP_ENV", "development")
-	APP_PORT = getEnv("APP_PORT", "8080")
-	APP_DEBUG = getEnvBool("APP_DEBUG", false)
-	APP_VERSION = getEnv("APP_VERSION", "v1.0")
-	APP_TIMEZONE = getEnv("APP_TIMEZONE", "UTC")
-	APP_URL = getEnv("APP_URL", "http://localhost")
-
-	// API
-	API_PREFIX = getEnv("API_PREFIX", "/api")
-	API_VERSION = getEnv("API_VERSION", "v1")
-
-	// Database
-	DB_CONNECTION = getEnv("DB_CONNECTION", "mysql")
-	DB_HOST = getEnv("DB_HOST", "127.0.0.1")
-	DB_PORT = getEnv("DB_PORT", "3306")
-	DB_NAME = getEnv("DB_NAME", "")
-	DB_USER = getEnv("DB_USER", "")
-	DB_PASSWORD = getEnv("DB_PASSWORD", "")
-	DB_MAX_OPEN_CONNS = getEnvInt("DB_MAX_OPEN_CONNS", 10)
-	DB_MAX_IDLE_CONNS = getEnvInt("DB_MAX_IDLE_CONNS", 10)
-	DB_CONN_MAX_LIFETIME = getEnvDuration("DB_CONN_MAX_LIFETIME", 5*time.Minute)
-	DB_CONN_MAX_IDLE_TIME = getEnvDuration("DB_CONN_MAX_IDLE_TIME", 2*time.Minute)
-
-	// SMTP
-	SMTP_HOST = getEnv("SMTP_HOST", "")
-	SMTP_PORT = getEnvInt("SMTP_PORT", 587)
-	SMTP_USERNAME = getEnv("SMTP_USERNAME", "")
-	SMTP_PASSWORD = getEnv("SMTP_PASSWORD", "")
-	SMTP_FROM = getEnv("SMTP_FROM", "")
-
-	// Redis
-	REDIS_HOST = getEnv("REDIS_HOST", "127.0.0.1")
-	REDIS_PORT = getEnvInt("REDIS_PORT", 6379)
-	REDIS_PASSWORD = getEnv("REDIS_PASSWORD", "")
-	REDIS_DB = getEnvInt("REDIS_DB", 0)
-
-	// Logging
-	LOG_LEVEL = getEnv("LOG_LEVEL", "info")
-
-	// File Uploads
-	UPLOAD_DIR = getEnv("UPLOAD_DIR", "./storage/uploads")
-	MAX_UPLOAD_SIZE = getEnv("MAX_UPLOAD_SIZE", "10MB")
-
-	// Pagination
-	DEFAULT_PAGE_SIZE = getEnvInt("DEFAULT_PAGE_SIZE", 10)
-	MAX_PAGE_SIZE = getEnvInt("MAX_PAGE_SIZE", 100)
-
-	// Rate Limiting
-	RATE_LIMIT_REQUESTS = getEnvInt("RATE_LIMIT_REQUESTS", 100)
-	RATE_LIMIT_DURATION = getEnvDuration("RATE_LIMIT_DURATION", 1*time.Minute)
-
-	// JWT Authentication
-	JWT_SECRET = getEnv("JWT_SECRET", "")
-	JWT_EXPIRATION = getEnvDuration("JWT_EXPIRATION", 24*time.Hour)
-	JWT_ISSUER = getEnv("JWT_ISSUER", "UserRestAPIGo")
-
-	// CORS
-	CORS_ALLOWED_ORIGINS = getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000")
-	CORS_ALLOWED_METHODS = getEnv("CORS_ALLOWED_METHODS", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-	CORS_ALLOWED_HEADERS = getEnv("CORS_ALLOWED_HEADERS", "Content-Type,Authorization")
-
-	// Validate required variables
-	validateRequired("DB_NAME", DB_NAME)
-	validateRequired("DB_USER", DB_USER)
-	// validateRequired("JWT_SECRET", JWT_SECRET)
 }
 
 // Helper functions
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
+func getenv(key, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
 		return value
 	}
 	return defaultValue
 }
 
-func getEnvBool(key string, defaultValue bool) bool {
-	value := os.Getenv(key)
-	if value == "" {
-		return defaultValue
+func getenvi(key string, defaultValue int) int {
+	if value, exists := os.LookupEnv(key); exists {
+		if intVal, err := strconv.Atoi(value); err == nil {
+			return intVal
+		}
 	}
-	boolVal, err := strconv.ParseBool(value)
-	if err != nil {
-		log.Printf("Invalid boolean value for %s: %s, using default: %v", key, value, defaultValue)
-		return defaultValue
-	}
-	return boolVal
+	return defaultValue
 }
 
-func getEnvInt(key string, defaultValue int) int {
+func getenvDuration(key string, defaultValue time.Duration) time.Duration {
 	value := os.Getenv(key)
 	if value == "" {
 		return defaultValue
 	}
-	intVal, err := strconv.Atoi(value)
-	if err != nil {
-		log.Printf("Invalid integer value for %s: %s, using default: %d", key, value, defaultValue)
-		return defaultValue
-	}
-	return intVal
-}
 
-func getEnvDuration(key string, defaultValue time.Duration) time.Duration {
-	value := os.Getenv(key)
-	if value == "" {
-		return defaultValue
-	}
 	duration, err := time.ParseDuration(value)
 	if err != nil {
-		log.Printf("Invalid duration value for %s: %s, using default: %v", key, value, defaultValue)
 		return defaultValue
 	}
-	return duration
-}
 
-func validateRequired(key, value string) {
-	if value == "" {
-		log.Fatalf("Environment variable %s is required", key)
-	}
+	return duration
 }
