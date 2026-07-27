@@ -92,7 +92,7 @@ func configurePool(gormDB *gorm.DB, config DatabaseConfig) error {
 	}
 
 	sqlDB.SetConnMaxLifetime(config.ConnMaxLifetime)
-	sqlDB.SetMaxOpenConns(config.MaxConnections)
+	sqlDB.SetMaxOpenConns(config.MaxOpenConns)
 	sqlDB.SetMaxIdleConns(config.MaxIdleConns)
 
 	return nil
