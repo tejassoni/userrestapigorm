@@ -12,10 +12,12 @@ import (
 * New initializes the validator and registers custom validation functions.
 * It sets up the validator to be used for validating request payloads and other data structures.
  */
-func New() *validator.Validate {
+func New(userRepository repository.UserRepository) *validator.Validate {
 	validate := validator.New()
 	// Register custom validation functions
-	validate.RegisterValidation("is_unique_email", IsUserEmailExists)
+	validate.RegisterValidation("is_unique_email", func(fl validator.FieldLevel) bool {
+		return IsUserEmailExists(userRepository, fl)
+	})
 	validate.RegisterValidation("is_birthdate_in_past", IsBirthdateInPast)
 	return validate
 }
@@ -26,11 +28,11 @@ func New() *validator.Validate {
 @param fl validator.FieldLevel - The field level information provided by the validator.
 @return bool - Returns true if the email is unique (does not exist in the database), otherwise returns false.
 */
-func IsUserEmailExists(fl validator.FieldLevel) bool {
+func IsUserEmailExists(userRepository repository.UserRepository, fl validator.FieldLevel) bool {
 	email := fl.Field().String()
 
 	ctx := context.Background()
-	exists, err := repository.UserEmailExists(ctx, email)
+	exists, err := userRepository.UserEmailExists(ctx, email)
 	if err != nil {
 		return false
 	}

@@ -17,6 +17,7 @@ import (
 	"userrestapigorm/internal/repository"
 	"userrestapigorm/internal/router"
 	"userrestapigorm/internal/service"
+	"userrestapigorm/internal/validator"
 )
 
 type Application struct {
@@ -43,8 +44,6 @@ func Build() (app *Application, err error) {
 
 	cfg := config.Load()
 
-	appLogger = logger.New()
-
 	db, err := config.ConnectDB()
 	if err != nil {
 		return nil, fmt.Errorf("connect database: %w", err)
@@ -63,11 +62,14 @@ func Build() (app *Application, err error) {
 
 	userRepo := repository.NewUserRepository(db)
 
+	userValidator := validator.New(userRepo)
+
 	userService := service.NewUserService(userRepo)
 
 	userHandler := handlers.NewUserHandler(
 		userService,
 		appLogger,
+		userValidator,
 	)
 
 	httpRouter := router.New(userHandler, cfg)

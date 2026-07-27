@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
-	"net/mail"
 	"net/http"
+	"net/mail"
 	"strconv"
 	"strings"
 	"time"
@@ -16,6 +16,7 @@ import (
 	"userrestapigorm/internal/requests"
 	"userrestapigorm/internal/responses"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 )
@@ -33,12 +34,14 @@ type UserService interface {
 type UserHandler struct {
 	userService UserService
 	logger      *slog.Logger
+	validate    *validator.Validate
 }
 
-func NewUserHandler(userService UserService, logger *slog.Logger) *UserHandler {
+func NewUserHandler(userService UserService, logger *slog.Logger, validate *validator.Validate) *UserHandler {
 	return &UserHandler{
 		userService: userService,
 		logger:      logger,
+		validate:    validate,
 	}
 }
 
@@ -176,6 +179,10 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, responses.APIResponse{Status: false, Message: "Invalid request body", Error: "bad request"})
 		return
 	}
+	if err := h.validate.Struct(request); err != nil {
+		writeJSON(w, http.StatusBadRequest, responses.APIResponse{Status: false, Message: err.Error(), Error: "validation failed"})
+		return
+	}
 
 	user, err := createUserFromRequest(request)
 	if err != nil {
@@ -202,6 +209,10 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var request requests.UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		writeJSON(w, http.StatusBadRequest, responses.APIResponse{Status: false, Message: "Invalid request body", Error: "bad request"})
+		return
+	}
+	if err := h.validate.Struct(request); err != nil {
+		writeJSON(w, http.StatusBadRequest, responses.APIResponse{Status: false, Message: err.Error(), Error: "validation failed"})
 		return
 	}
 

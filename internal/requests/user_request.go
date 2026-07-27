@@ -13,7 +13,7 @@ type CreateUserRequest struct {
 type UpdateUserRequest struct {
 	ID        int    `json:"id"`
 	Name      string `json:"name" validate:"required,min=3,max=100"`
-	Email     string `json:"email" validate:"required,email,is_unique_email"`
+	Email     string `json:"email" validate:"required,email"`
 	Gender    string `json:"gender" validate:"required,oneof=male female other"`
 	Birthdate string `json:"birthdate" validate:"required,datetime=2006-01-02,is_birthdate_in_past"`
 	IsActive  bool   `json:"is_active"`
