@@ -16,6 +16,8 @@ type UserRepository interface {
 	CreateUser(ctx context.Context, user *models.User) error
 	UpdateUser(ctx context.Context, id uint, user *models.User) (*models.User, error)
 	DeleteUser(ctx context.Context, id uint) error
+	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
+	UserEmailExists(ctx context.Context, email string) (bool, error)
 }
 
 // 2. Concrete struct implementation
@@ -104,4 +106,48 @@ func (r *userRepository) DeleteUser(ctx context.Context, id uint) error {
 	}
 
 	return nil
+}
+
+func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
+	var user models.User
+
+	err := r.db.
+		WithContext(ctx).
+		Where("email = ?", email).
+		First(&user).
+		Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, fmt.Errorf("user not found: %w", err)
+		}
+		return nil, fmt.Errorf("find user by email: %w", err)
+	}
+
+	return &user, nil
+}
+
+/*
+* UserEmailExists checks if a user with the given email already exists in the database.
+* It takes a string email as input and returns a boolean indicating existence and an error if the operation fails.
+@param email string - The email address to check for existence in the database.
+@return bool - Returns true if the email exists, false otherwise.
+@return error - Returns an error if the database operation fails, otherwise returns nil.
+*/
+func (r *userRepository) UserEmailExists(ctx context.Context, email string) (bool, error) {
+	var exists bool
+
+	err := r.db.
+		WithContext(ctx).
+		Model(&models.User{}).
+		Select("COUNT(*) > 0").
+		Where("email = ?", email).
+		Find(&exists).
+		Error
+
+	if err != nil {
+		return false, fmt.Errorf("check email exists: %w", err)
+	}
+
+	return exists, nil
 }
