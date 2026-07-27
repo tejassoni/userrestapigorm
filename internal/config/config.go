@@ -79,7 +79,7 @@ func Load() *Config {
 		},
 		Server: ServerConfig{
 			Host:              getenv("SERVER_HOST", ""),
-			Port:              getenv("APP_PORT", "8080"),
+			Port:              getenv("SERVER_PORT", "8080"),
 			ReadHeaderTimeout: getenvDuration("SERVER_READ_HEADER_TIMEOUT", 5*time.Second),
 			ReadTimeout:       getenvDuration("SERVER_READ_TIMEOUT", 10*time.Second),
 			WriteTimeout:      getenvDuration("SERVER_WRITE_TIMEOUT", 10*time.Second),
