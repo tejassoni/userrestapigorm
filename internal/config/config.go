@@ -27,11 +27,12 @@ type AppConfig struct {
 
 // ServerConfig contains HTTP server settings
 type ServerConfig struct {
-	Host         string
-	Port         string
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	IdleTimeout  time.Duration
+	Host              string
+	Port              string
+	ReadTimeout       time.Duration
+	WriteTimeout      time.Duration
+	IdleTimeout       time.Duration
+	ShutdownTimeout   time.Duration
 	ReadHeaderTimeout time.Duration
 }
 
@@ -83,6 +84,7 @@ func Load() *Config {
 			ReadTimeout:       getenvDuration("SERVER_READ_TIMEOUT", 10*time.Second),
 			WriteTimeout:      getenvDuration("SERVER_WRITE_TIMEOUT", 10*time.Second),
 			IdleTimeout:       getenvDuration("SERVER_IDLE_TIMEOUT", 60*time.Second),
+			ShutdownTimeout:   getenvDuration("SERVER_SHUTDOWN_TIMEOUT", 30*time.Second),
 		},
 		API: APIConfig{
 			Prefix:  getenv("API_PREFIX", "/api"),
